@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Portail OpenFaaS</title>
+</head>
+<body>
+  <h2>Créer un utilisateur</h2>
+  <form id="create-form">
+    <input type="text" id="create-username" placeholder="Nom d'utilisateur" required />
+    <button type="submit">Créer</button>
+  </form>
+
+  <h2>Authentification</h2>
+  <form id="auth-form">
+    <input type="text" id="auth-username" placeholder="Nom d'utilisateur" required />
+    <input type="password" id="auth-password" placeholder="Mot de passe" required />
+    <input type="text" id="auth-2fa" placeholder="Code 2FA" required />
+    <button type="submit">Authentifier</button>
+  </form>
+
+  <h2>Réinitialiser mot de passe + 2FA</h2>
+  <form id="reset-form">
+    <input type="text" id="reset-username" placeholder="Nom d'utilisateur" required />
+    <button type="submit">Réinitialiser</button>
+  </form>
+
+  <div id="result"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

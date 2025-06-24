@@ -1,0 +1,79 @@
+import os
+import string
+import random
+import base64
+import qrcode
+import io
+from cryptography.fernet import Fernet
+import psycopg2
+import time
+
+# Récupération de la clé Fernet depuis la variable d'environnement (en base64)
+FERNET_KEY = os.environ.get('FERNET_KEY')
+if not FERNET_KEY:
+    raise ValueError("FERNET_KEY environment variable not set")
+key = FERNET_KEY.encode()
+fernet = Fernet(key)
+
+# Fonction de génération de mot de passe aléatoire
+def generate_password(length=24):
+    chars = string.ascii_letters + string.digits + string.punctuation
+    return ''.join(random.choice(chars) for _ in range(length))
+
+# Fonction pour générer un QR code base64
+def generate_qrcode(data):
+    qr = qrcode.QRCode()
+    qr.add_data(data)
+    qr.make(fit=True)
+    img = qr.make_image(fill="black", back_color="white")
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+def handle(event, context=None):
+    # Récupération des variables d'environnement pour la connexion Postgres
+    POSTGRES_HOST = os.environ.get('POSTGRES_HOST')
+    POSTGRES_DB = os.environ.get('POSTGRES_DB')
+    POSTGRES_USER = os.environ.get('POSTGRES_USER')
+    POSTGRES_PASSWORD = os.environ.get('POSTGRES_PASSWORD')
+
+    if not all([POSTGRES_HOST, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD]):
+        return "Error: PostgreSQL environment variables not set"
+
+    # username envoyé dans le body (texte simple)
+    username = event.strip()
+
+    if not username:
+        return "Error: no username provided"
+
+    password = generate_password()
+    encrypted_password = fernet.encrypt(password.encode()).decode()
+
+    # Connexion à la base Postgres
+    conn = psycopg2.connect(
+        host=POSTGRES_HOST,
+        dbname=POSTGRES_DB,
+        user=POSTGRES_USER,
+        password=POSTGRES_PASSWORD
+    )
+    cur = conn.cursor()
+    gen_date = int(time.time())
+
+    # Insert ou update la table users
+    cur.execute("""
+        INSERT INTO users (username, password, gen_date, expired)
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (username) DO UPDATE
+        SET password = EXCLUDED.password,
+            gen_date = EXCLUDED.gen_date,
+            expired = FALSE
+        """,
+        (username, encrypted_password, gen_date, False)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    qr_code_b64 = generate_qrcode(password)
+    # On retourne le QR code en base64 (tu peux l'afficher côté client)
+    return qr_code_b64

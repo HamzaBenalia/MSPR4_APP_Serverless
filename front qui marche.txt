@@ -1,0 +1,58 @@
+const gateway = "http://127.0.0.1:8080/function";
+
+// Formulaire création de mot de passe
+document.getElementById("create-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const username = document.getElementById("create-username").value.trim();
+
+  const res = await fetch(`${gateway}/create-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain"  // On précise texte brut
+    },
+    body: username  // On envoie juste le texte simple, pas JSON
+  });
+
+  document.getElementById("result").innerHTML = await res.text();
+});
+
+// Formulaire authentification (si besoin de JSON, ça reste JSON, sinon adapter aussi)
+document.getElementById("auth-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const username = document.getElementById("auth-username").value.trim();
+  const password = document.getElementById("auth-password").value.trim();
+  const code_2fa = document.getElementById("auth-2fa").value.trim();
+
+  // Ici on reste JSON car on envoie plusieurs champs
+  const res = await fetch(`${gateway}/authenticate-user`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password, code_2fa })
+  });
+  document.getElementById("result").innerHTML = await res.text();
+});
+
+// Formulaire reset (envoi simple username en texte brut pour chaque requête)
+document.getElementById("reset-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const username = document.getElementById("reset-username").value.trim();
+
+  // Envoi 1 : création mot de passe
+  const res1 = await fetch(`${gateway}/create-password`, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: username
+  });
+
+  // Envoi 2 : création secret 2FA + QRCode
+  const res2 = await fetch(`${gateway}/create-2fa-secret-and-qrcode`, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: username
+  });
+
+  const text1 = await res1.text();
+  const text2 = await res2.text();
+
+  document.getElementById("result").innerHTML = text1 + "<br><br>" + text2;
+});

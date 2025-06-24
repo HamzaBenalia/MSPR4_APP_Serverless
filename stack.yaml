@@ -1,0 +1,38 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8080
+
+functions:
+  create-password:
+    lang: python3-flask
+    handler: ./create-password
+    image: hamza3991/create-password:latestV2
+    environment:
+      POSTGRES_HOST: "postgresql.database.svc.cluster.local"
+      POSTGRES_DB: "postgres"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "uAuXXaOmOh"
+      FERNET_KEY: "DbpzAtPMWWZe7GPyLHQyN2Lm1fubdvtyNSgjiAHw1XY="
+
+  create-2fa-secret-and-qrcode:
+    lang: python3-flask
+    handler: ./create-2fa-secret-and-qrcode
+    image: hamza3991/create-2fa-secret-and-qrcode:latest
+    environment:
+      POSTGRES_HOST: "postgresql.database.svc.cluster.local"
+      POSTGRES_DB: "postgres"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "uAuXXaOmOh"
+      FERNET_KEY: "DbpzAtPMWWZe7GPyLHQyN2Lm1fubdvtyNSgjiAHw1XY="
+
+  authenticate-user:
+    lang: python3-flask
+    handler: ./authenticate-user
+    image: hamza3991/authenticate-user:latest
+    environment:
+      POSTGRES_HOST: "postgresql.database.svc.cluster.local"
+      POSTGRES_DB: "postgres"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "uAuXXaOmOh"
+      FERNET_KEY: "DbpzAtPMWWZe7GPyLHQyN2Lm1fubdvtyNSgjiAHw1XY="
