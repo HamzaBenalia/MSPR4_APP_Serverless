@@ -1,4 +1,4 @@
-fastapi
 psycopg2-binary
 cryptography
 pyotp
+uvicorn

@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: frontend-openfaas
-        image: hamza3991/frontend-openfaas:latestV5
+        image: hamza3991/frontend-openfaas:latestV13
         ports:
         - containerPort: 80
 

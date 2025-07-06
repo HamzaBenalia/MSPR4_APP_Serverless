@@ -1,0 +1,62 @@
+$ faas-cli deploy -f stack.yaml --gateway http://localhost:8080 --filter create-password   : to deploy stack.yaml (noteverything just create password file )
+
+$ kubectl run -i --tty temp-psql --image=postgres --restart=Never   --env="PGPASSWORD=uAuXXaOmOh"   -- bash -c "psql -h postgresql.database.svc.cluster.local -U postgres -d postgres -c \"SELECT * FROM users WHERE username='hamza';\""
+to see the db 
+
+
+to get the code of the interface : $ kubectl -n openfaas get secret basic-auth -o jsonpath="{.data.basic-auth-password}" | base64 --decode
+
+
+minikube service frontend-service -n openfaas -p openfaas-project
+pour acceder au front  
+
+
+Obtenir le mot de passe postgres
+kubectl get secret --namespace database postgresql -o jsonpath="{.data.postgres-password}" | base64 --decode
+
+
+
+
+pour pusher c est faas cli pas le docker build :
+faas-cli build -f stack.yaml --filter create-2fa-secret-and-qrcode  
+faas-cli push -f stack.yaml --filter create-2fa-secret-and-qrcode
+
+ faas-cli deploy -f stack.yaml --gateway http://localhost:8080 --filter create-2fa-secret-and-qrcode
+
+
+ voir les erreur d une fonction : $ curl -X POST http://127.0.0.1:8080/function/create-2fa-secret-and-qrcode -H "Content-Type: text/plain" -d "usernameTest"
+
+Delete pod bdd : kubectl delete pod temp-psql
+ 
+
+
+ kubectl run -i --tty temp-psql --image=postgres --restart=Never \
+  --env="PGPASSWORD=uAuXXaOmOh" \
+  -- bash -c "psql -h postgresql.database.svc.cluster.local -U postgres -d postgres -c \"SELECT * FROM users WHERE username='hamza';\""
+
+
+
+$ kubectl port-forward -n openfaas svc/gateway 8080:8080  pour le forwading du front 
+
+
+
+pour les logs et voir dou vient l erreur : kubectl logs -n openfaas-fn deploy/authenticate-user
+
+
+
+mot de pass interface openfaas : admin / GcjBBfjEDB4D
+
+
+list fonction deployer : faas-cli list --gateway http://127.0.0.1:8080
+
+
+
+
+Pour evité les cors sur windows : Sur Windows
+Ferme toutes les fenêtres Chrome ouvertes.
+
+Appuie sur Win + R pour ouvrir la boîte Exécuter.
+
+Copie-colle cette commande (en adaptant le chemin si besoin) puis valide :
+
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --disable-web-security --user-data-dir="C:/ChromeDevSession"

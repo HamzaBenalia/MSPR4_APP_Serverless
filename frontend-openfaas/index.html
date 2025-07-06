@@ -1,31 +1,114 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Portail OpenFaaS</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    main {
+      max-width: 480px;
+      width: 100%;
+      background: white;
+      padding: 20px 30px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 8px;
+    }
+    section {
+      margin-bottom: 30px;
+    }
+    h2 {
+      border-bottom: 2px solid #4a90e2;
+      padding-bottom: 8px;
+      margin-bottom: 15px;
+      color: #333;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #555;
+    }
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 8px 10px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #4a90e2;
+      color: white;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #357ABD;
+    }
+    #result {
+      margin-top: 25px;
+      padding: 15px;
+      background: #f1f8ff;
+      border: 1px solid #b6d4fe;
+      border-radius: 6px;
+      min-height: 80px;
+      font-size: 0.9rem;
+      color: #1a1a1a;
+      word-wrap: break-word;
+    }
+  </style>
 </head>
 <body>
-  <h2>Créer un utilisateur</h2>
-  <form id="create-form">
-    <input type="text" id="create-username" placeholder="Nom d'utilisateur" required />
-    <button type="submit">Créer</button>
-  </form>
+  <main>
+    <section>
+      <h2>Créer un utilisateur</h2>
+      <form id="create-form">
+        <label for="create-username">Nom d'utilisateur</label>
+        <input type="text" id="create-username" placeholder="Nom d'utilisateur" required />
+        <button type="submit">Créer</button>
+      </form>
+    </section>
 
-  <h2>Authentification</h2>
-  <form id="auth-form">
-    <input type="text" id="auth-username" placeholder="Nom d'utilisateur" required />
-    <input type="password" id="auth-password" placeholder="Mot de passe" required />
-    <input type="text" id="auth-2fa" placeholder="Code 2FA" required />
-    <button type="submit">Authentifier</button>
-  </form>
+    <section>
+      <h2>Authentification</h2>
+      <form id="auth-form">
+        <label for="auth-username">Nom d'utilisateur</label>
+        <input type="text" id="auth-username" placeholder="Nom d'utilisateur" required />
 
-  <h2>Réinitialiser mot de passe + 2FA</h2>
-  <form id="reset-form">
-    <input type="text" id="reset-username" placeholder="Nom d'utilisateur" required />
-    <button type="submit">Réinitialiser</button>
-  </form>
+        <label for="auth-password">Mot de passe</label>
+        <input type="password" id="auth-password" placeholder="Mot de passe" required />
 
-  <div id="result"></div>
+        <label for="auth-2fa">Code 2FA</label>
+        <input type="text" id="auth-2fa" placeholder="Code 2FA" required />
+
+        <button type="submit">Authentifier</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>Réinitialiser mot de passe + 2FA</h2>
+      <form id="reset-form">
+        <label for="reset-username">Nom d'utilisateur</label>
+        <input type="text" id="reset-username" placeholder="Nom d'utilisateur" required />
+        <button type="submit">Réinitialiser</button>
+      </form>
+    </section>
+
+    <div id="result"></div>
+  </main>
 
   <script src="script.js"></script>
 </body>

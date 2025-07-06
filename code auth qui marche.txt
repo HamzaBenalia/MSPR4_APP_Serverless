@@ -1,0 +1,144 @@
+import json
+import logging
+import os
+import secrets
+from datetime import datetime, timedelta, timezone
+import psycopg2
+import pyotp
+from cryptography.fernet import Fernet, InvalidToken
+
+# -------------------------------------------------------------------
+# Configuration
+# -------------------------------------------------------------------
+
+FERNET_KEY = os.environ["FERNET_KEY"].encode()
+fernet = Fernet(FERNET_KEY)
+
+EXPIRY_DAYS = 183
+TOTP_INTERVAL = 30
+
+# -------------------------------------------------------------------
+# Authentification
+# -------------------------------------------------------------------
+
+def authenticate_user(username: str, password: str, code_2fa: str):
+    conn = None
+    try:
+        conn = psycopg2.connect(
+            host=os.environ["POSTGRES_HOST"],
+            dbname=os.environ["POSTGRES_DB"],
+            user=os.environ["POSTGRES_USER"],
+            password=os.environ["POSTGRES_PASSWORD"],
+            port=os.environ.get("POSTGRES_PORT", "5432")
+        )
+
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT password, mfa_secret, gen_date, expired
+                  FROM users
+                 WHERE username = %s
+            """, (username,))
+            row = cur.fetchone()
+
+            if not row:
+                return False, "Utilisateur non trouvé"
+
+            enc_password, enc_mfa_secret, gen_date, expired = row
+
+            if expired:
+                return False, "Identifiants expirés"
+
+            if isinstance(enc_password, str):
+                enc_password = enc_password.encode()
+            if isinstance(enc_mfa_secret, str):
+                enc_mfa_secret = enc_mfa_secret.encode()
+
+            try:
+                decrypted_password = fernet.decrypt(enc_password).decode()
+                decrypted_secret = fernet.decrypt(enc_mfa_secret).decode()
+            except InvalidToken:
+                return False, "Erreur de déchiffrement"
+
+            if not secrets.compare_digest(password, decrypted_password):
+                return False, "Mot de passe invalide"
+
+            totp = pyotp.TOTP(decrypted_secret, interval=TOTP_INTERVAL)
+            if not totp.verify(code_2fa, valid_window=2):
+                return False, "Code 2FA invalide"
+
+            gen_date = datetime.fromtimestamp(int(gen_date), tz=timezone.utc)
+            if datetime.now(tz=timezone.utc) - gen_date > timedelta(days=EXPIRY_DAYS):
+                cur.execute("UPDATE users SET expired = 1 WHERE username = %s", (username,))
+                conn.commit()
+                return False, "Identifiants expirés"
+
+        return True, "Authentification réussie"
+
+    except psycopg2.Error:
+        logging.exception("Erreur base de données")
+        return False, "Erreur base de données"
+
+    except Exception:
+        logging.exception("Erreur interne")
+        return False, "Erreur interne"
+
+    finally:
+        if conn:
+            conn.close()
+
+# -------------------------------------------------------------------
+# Fonction handle() utilisée par OpenFaaS
+# -------------------------------------------------------------------
+
+def handle(event, context=None):
+    # Gestion du preflight CORS (OPTIONS)
+    if hasattr(event, 'method') and event.method == "OPTIONS":
+        return cors_response({}, status_code=204)
+
+    try:
+        # Parse JSON
+        data = json.loads(event.body)
+
+
+        username = data.get("username", "")
+        password = data.get("password", "")
+        code_2fa = data.get("2fa_code", "")
+
+        ok, msg = authenticate_user(username, password, code_2fa)
+
+        return cors_response({
+            "status": "success" if ok else "error",
+            "message": msg
+        })
+
+    except json.JSONDecodeError:
+        logging.exception("JSON invalide")
+        return cors_response({
+            "status": "error",
+            "message": "Requête JSON invalide"
+        }, status_code=400)
+
+    except Exception:
+        logging.exception("Erreur inconnue")
+        return cors_response({
+            "status": "error",
+            "message": "Erreur interne"
+        }, status_code=500)
+
+# -------------------------------------------------------------------
+# Helper pour réponse CORS
+# -------------------------------------------------------------------
+
+def cors_response(body: dict, status_code: int = 200):
+    response = {
+        "statusCode": status_code,
+        "body": json.dumps(body),
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type",
+            "Access-Control-Max-Age": "3600"
+        }
+    }
+    return response
